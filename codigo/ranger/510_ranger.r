@@ -13,12 +13,12 @@ require("ranger")
 require("randomForest")  #solo se usa para imputar nulos
 
 #Aqui se debe poner la carpeta de la computadora local
-setwd("~/buckets/b1/crudo/")  #Establezco el Working Directory
+setwd("C:/Users/Jonathan/Desktop/MCD - Laboratorio/7.Labo_1")  #Establezco el Working Directory
 
 #cargo los datos donde entreno
 dtrain  <- fread("./datasetsOri/paquete_premium_202011.csv", stringsAsFactors= TRUE)
 
-dtrain[ , clase_binaria := as.factor(ifelse( clase_ternaria=="BAJA+2", "POS", "NEG" )) ]
+dtrain[ , clase_binaria := as.factor(ifelse( clase_ternaria=="BAJA+2" | clase_ternaria=="BAJA+1", "POS", "NEG" )) ]
 dtrain[ , clase_ternaria := NULL ]  #elimino la clase_ternaria, ya no la necesito
 
 #imputo los nulos, ya que ranger no acepta nulos
@@ -37,7 +37,7 @@ param  <- list( "num.trees"=      500,  #cantidad de arboles
                 "max.depth"=        0   # 0 significa profundidad infinita
               )
 
-set.seed(102191) #Establezco la semilla aleatoria
+set.seed(100001) #Establezco la semilla aleatoria
 
 modelo  <- ranger( formula= "clase_binaria ~ .",
                    data=  dtrain, 
@@ -56,5 +56,5 @@ entrega  <- as.data.table( list( "numero_de_cliente"= dapply[  , numero_de_clien
 
 #genero el archivo para Kaggle
 fwrite( entrega, 
-        file="./kaggle/ranger_001.csv", 
+        file="./kaggle/ranger_002.csv", 
         sep="," )

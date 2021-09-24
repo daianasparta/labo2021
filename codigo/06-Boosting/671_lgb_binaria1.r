@@ -128,12 +128,12 @@ EstimarGanancia_lightgbm  <- function( x )
 
   kfolds  <- 5   # cantidad de folds para cross validation
 
-  param_basicos  <- list( objective= "binary",
-                          metric= "custom",
+  param_basicos  <- list( objective= "binary", # binary es para clasificación. Devuelve prob entre 0 y 1
+                          metric= "custom", # determinamos nosotros la métrica, que estará relacionada con la ganancia. Si no pusiera custom, tomaría log loss (gcia en términos de información). Podría pedir que evalúe con área bajo la curva ROC (se usa "AUC")
                           first_metric_only= TRUE,
-                          boost_from_average= TRUE,
-                          feature_pre_filter= FALSE,
-                          verbosity= -100,
+                          boost_from_average= TRUE, # por default es TRUE (es para que tome el promedio como primer arbol)
+                          feature_pre_filter= FALSE, # FALSE para que no haga 
+                          verbosity= -100, # con -100 pedimos que no reporte el avance del proceso. A mayores nros más cantidad de reportes irá dando el programa
                           seed= 999983,
                           max_depth=  -1,         # -1 significa no limitar,  por ahora lo dejo fijo
                           min_gain_to_split= 0.0, #por ahora, lo dejo fijo
