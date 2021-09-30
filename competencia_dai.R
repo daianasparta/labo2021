@@ -132,13 +132,13 @@ EnriquecerDataset <- function( dataset , arch_destino )
            by=numero_de_cliente, 
            .SDcols= campos_lags ]    
   
-  dataset[ , paste0( campos_lags, "var_im") := .SD / shift(.SD, 1, NA, "lag")*100, 
+  dataset[ , paste0( campos_lags, "_var_im") := (.SD / shift(.SD, 1, NA, "lag")-1)*100, 
            by=numero_de_cliente, 
            .SDcols= campos_lags ]    
   
   #Variacion respecto al maximo de los ultimos 3 meses
   
-  dataset[ , paste0( campos_lags, "var_max_3m") := .SD / pmax(shift(.SD, c(1,2,3), NA, "lag"))*100, 
+  dataset[ , paste0( campos_lags, "var_max_3m") := (.SD / pmax(shift(.SD, c(1,2,3), NA, "lag"))-1)*100, 
            by=numero_de_cliente, 
            .SDcols= campos_lags ]  
   

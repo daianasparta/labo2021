@@ -11,7 +11,7 @@ gc()             #garbage collection
 require("data.table")
 require("lightgbm")
 
-setwd("~/buckets/b1/")
+setwd("~/buckets/b1/") # el símbolo ~ refiere al home donde cloud guarda todo lo del usuario
 
 #cargo el dataset donde voy a entrenar
 dataset  <- fread("./datasetsOri/paquete_premium_202011.csv")
