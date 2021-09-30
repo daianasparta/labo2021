@@ -23,7 +23,7 @@ require("lightgbm")
 require("DiceKriging")
 require("mlrMBO")
 
-vendor <- NA
+vendor <- "Google"
 if( Sys.info()[['sysname']]== "Linux" ) vendor  <- system("sudo dmidecode -s bios-vendor", intern = TRUE)
 
 #para poder usarlo en la PC y en la nube sin tener que cambiar la ruta
@@ -48,18 +48,18 @@ karch_aplicacion  <- "./datasetsOri/paquete_premium_202101.csv"
 kBO_iter    <-  150   #cantidad de iteraciones de la Optimizacion Bayesiana
 
 #Aqui se cargan los hiperparametros. 
-# !!! Un buen criterio sería: si en el mejor conjunto, alguno de los parámetros está muy en los límites que le fijé, puedo ampliarle un poco el límite
+# !!! Un buen criterio ser?a: si en el mejor conjunto, alguno de los par?metros est? muy en los l?mites que le fij?, puedo ampliarle un poco el l?mite
 hs <- makeParamSet( 
-         makeNumericParam("learning_rate",    lower= 0.01 , upper=    0.1), # podría poner 0.3 como upeer limit y va bien tb!
-         makeNumericParam("feature_fraction", lower= 0.2  , upper=    1.0), # con qué proporción de datos va a entrenar cada árbol (20% a 100%). es un param tomado del ranger!
+         makeNumericParam("learning_rate",    lower= 0.01 , upper=    0.1), # podr?a poner 0.3 como upeer limit y va bien tb!
+         makeNumericParam("feature_fraction", lower= 0.2  , upper=    1.0), # con qu? proporci?n de datos va a entrenar cada ?rbol (20% a 100%). es un param tomado del ranger!
          makeIntegerParam("min_data_in_leaf", lower= 0    , upper= 8000),
-         makeIntegerParam("num_leaves",       lower=16L   , upper= 1024L), # 1024 hojas con un min_data_in_leaf tan alto no tiene mucho sentido (con 8000 obs en cada hoja, en un dataset de 240.000 datos, no podríahaber más de 30 hojas!)
+         makeIntegerParam("num_leaves",       lower=16L   , upper= 1024L), # 1024 hojas con un min_data_in_leaf tan alto no tiene mucho sentido (con 8000 obs en cada hoja, en un dataset de 240.000 datos, no podr?ahaber m?s de 30 hojas!)
          makeNumericParam("prob_corte",       lower= 0.020, upper=    0.035)
         )
 
 campos_malos  <- c( "mpasivos_margen" )   #aqui se deben cargar todos los campos culpables del Data Drifting
 
-ksemilla_azar  <- 102191  #Aqui poner la propia semilla
+ksemilla_azar  <- 100001  #Aqui poner la propia semilla
 #------------------------------------------------------------------------------
 #Funcion que lleva el registro de los experimentos
 
@@ -129,16 +129,16 @@ EstimarGanancia_lightgbm  <- function( x )
 
   kfolds  <- 5   # cantidad de folds para cross validation
 
-  param_basicos  <- list( objective= "binary", # binary es para clasificación. Devuelve prob entre 0 y 1
-                          metric= "custom", # determinamos nosotros la métrica, que estará relacionada con la ganancia. Si no pusiera custom, tomaría log loss (gcia en términos de información). Podría pedir que evalúe con área bajo la curva ROC (se usa "AUC")
+  param_basicos  <- list( objective= "binary", # binary es para clasificaci?n. Devuelve prob entre 0 y 1
+                          metric= "custom", # determinamos nosotros la m?trica, que estar? relacionada con la ganancia. Si no pusiera custom, tomar?a log loss (gcia en t?rminos de informaci?n). Podr?a pedir que eval?e con ?rea bajo la curva ROC (se usa "AUC")
                           first_metric_only= TRUE,
                           boost_from_average= TRUE, # por default es TRUE (es para que tome el promedio como primer arbol)
                           feature_pre_filter= FALSE, # FALSE para que no haga 
-                          verbosity= -100, # con -100 pedimos que no reporte el avance del proceso. A mayores nros más cantidad de reportes irá dando el programa
+                          verbosity= -100, # con -100 pedimos que no reporte el avance del proceso. A mayores nros m?s cantidad de reportes ir? dando el programa
                           seed= 100001,
                           max_depth=  -1,         # -1 significa no limitar,  por ahora lo dejo fijo
-                          min_gain_to_split= 0.0, #por ahora, lo dejo fijo # si estás aprendiendo algo que te aporta muy poco entonces no hagas el split!
-                          lambda_l1= 0.0,         #por ahora, lo dejo fijo  # penaliza el aprendizaje: el cálculo de la métrica de ganancia va a ser peor en lambda_l1 (para crecer "hay que pagar lambda_l1!)
+                          min_gain_to_split= 0.0, #por ahora, lo dejo fijo # si est?s aprendiendo algo que te aporta muy poco entonces no hagas el split!
+                          lambda_l1= 0.0,         #por ahora, lo dejo fijo  # penaliza el aprendizaje: el c?lculo de la m?trica de ganancia va a ser peor en lambda_l1 (para crecer "hay que pagar lambda_l1!)
                           lambda_l2= 0.0,         #por ahora, lo dejo fijo
                           max_bin= 31,            #por ahora, lo dejo fijo
                           num_iterations= 9999,    #un numero muy grande, lo limita early_stopping_rounds
@@ -147,11 +147,11 @@ EstimarGanancia_lightgbm  <- function( x )
 
   #el parametro discolo, que depende de otro
   param_variable  <- list(  early_stopping_rounds= as.integer(50 + 5/x$learning_rate) )
-  # el learning rate regula cuántos árboles sigo generando luego de haber alcanzado una gcia máxima, antes de cortar el algoritmo
-  # el learning rate es como el "tamaño" de los pasos que da para aprender
+  # el learning rate regula cu?ntos ?rboles sigo generando luego de haber alcanzado una gcia m?xima, antes de cortar el algoritmo
+  # el learning rate es como el "tama?o" de los pasos que da para aprender
   param_completo  <- c( param_basicos, param_variable, x )
 
-  # acá llamamos a lightGBM con cross validation para que calcule la gcia en cada iteración y poder optimizar los parámetros: early stopping, learning rate
+  # ac? llamamos a lightGBM con cross validation para que calcule la gcia en cada iteraci?n y poder optimizar los par?metros: early stopping, learning rate
   set.seed( 100001 )
   modelocv  <- lgb.cv( data= dtrain,
                        eval= fganancia_logistic_lightgbm,
@@ -162,13 +162,13 @@ EstimarGanancia_lightgbm  <- function( x )
                       )
 
 
-  ganancia  <- unlist(modelocv$record_evals$valid$ganancia$eval)[ modelocv$best_iter ] # traigo el conjunto de poarámetros que resultó en la mejor ganancia: "best_iter"
+  ganancia  <- unlist(modelocv$record_evals$valid$ganancia$eval)[ modelocv$best_iter ] # traigo el conjunto de poar?metros que result? en la mejor ganancia: "best_iter"
 
   ganancia_normalizada  <-  ganancia* kfolds  # extrapolamos la ganancia
   attr(ganancia_normalizada ,"extras" )  <- list("num_iterations"= modelocv$best_iter)  #esta es la forma de devolver un parametro extra
 
   param_completo$num_iterations <- modelocv$best_iter  #asigno el mejor num_iterations
-  param_completo["early_stopping_rounds"]  <- NULL #anulamos el early stopping, porque queremos que construya la misma cantidad de árboles que determinamos òptima en el cross validation
+  param_completo["early_stopping_rounds"]  <- NULL #anulamos el early stopping, porque queremos que construya la misma cantidad de ?rboles que determinamos ?ptima en el cross validation
 
    #si tengo una ganancia superadora, genero el archivo para Kaggle
    if(  ganancia > GLOBAL_ganancia_max )
@@ -284,7 +284,7 @@ if(!file.exists(kbayesiana)) {
 
 
 #apagado de la maquina virtual, pero NO se borra
-#if( vendor=="Google" ) { system( "sleep 10  &&  sudo shutdown -h now", wait=FALSE) }
+if( vendor=="Google" ) { system( "sleep 10  &&  sudo shutdown -h now", wait=FALSE) }
 
 #suicidio,  elimina la maquina virtual directamente
 #system( "sleep 10  && 
