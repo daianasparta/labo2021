@@ -24,7 +24,7 @@ palancas  <- list()  #variable con las palancas para activar/desactivar
 
 palancas$version  <- "v002"   #Muy importante, ir cambiando la version
 
-palancas$variablesdrift  <- c()   #aqui van las columnas que se quieren eliminar
+palancas$variablesdrift  <- c("mpasivos_margen", "mactivos_margen")   #aqui van las columnas que se quieren eliminar
 
 palancas$corregir <-  TRUE    # TRUE o FALSE
 
@@ -34,8 +34,8 @@ palancas$dummiesNA  <-  FALSE #La idea de Santiago Dellachiesa
 
 palancas$lag1   <- TRUE    #lag de orden 1
 palancas$delta1 <- TRUE    # campo -  lag de orden 1 
-palancas$lag2   <- FALSE
-palancas$delta2 <- FALSE
+palancas$lag2   <- TRUE
+palancas$delta2 <- TRUE
 palancas$lag3   <- FALSE
 palancas$delta3 <- FALSE
 palancas$lag4   <- FALSE
@@ -54,7 +54,7 @@ palancas$minimo6  <- FALSE
 palancas$maximo3  <- FALSE  #maximo de los ultimos 3 meses
 palancas$maximo6  <- FALSE
 
-palancas$ratiomax3   <- FALSE   #La idea de Daiana Sparta
+palancas$ratiomax3   <- TRUE   #La idea de Daiana Sparta
 palancas$ratiomean6  <- FALSE   #Un derivado de la idea de Daiana Sparta
 
 palancas$tendencia6  <- TRUE    #Great power comes with great responsability
@@ -89,7 +89,7 @@ DriftEliminar  <- function( dataset, variables )
   ReportarCampos( dataset )
 }
 #------------------------------------------------------------------------------
-#A las variables que tienen nulos, les agrega una nueva variable el dummy de is es nulo o no {0, 1}
+#A las variables que tienen nulos, les agrega una nueva variable el dummy de si es nulo o no {0, 1}
 
 DummiesNA  <- function( dataset )
 {
@@ -276,6 +276,22 @@ AgregarVariables  <- function( dataset )
   dataset[ , mvr_mpagosdolares       := mv_mpagosdolares / mv_mlimitecompra ]
   dataset[ , mvr_mconsumototal       := mv_mconsumototal  / mv_mlimitecompra ]
   dataset[ , mvr_mpagominimo         := mv_mpagominimo  / mv_mlimitecompra ]
+  
+  dataset[ , m_cacc    := rowSums( cbind( mcaja_ahorro,  mcuenta_corriente) , na.rm=TRUE ) ]
+  dataset[ , mvr_cacc   := mv_mconsumototal  / m_cacc ]
+  dataset[ , mvr_limite   := mv_mconsumototal  / (Master_mlimitecompra + Visa_mlimitecompra) ]
+  
+  # Debitos automaticos
+  dataset[ , c_debitos    := rowSums( cbind( ccuenta_debitos_automaticos,ctarjeta_master_debitos_automaticos,  ctarjeta_visa_debitos_automaticos) , na.rm=TRUE ) ]
+  dataset[ , m_debitos    := rowSums( cbind( mcuenta_debitos_automaticos,mttarjeta_master_debitos_automaticos,  mttarjeta_visa_debitos_automaticos) , na.rm=TRUE ) ]
+  
+  # Prestamos y seguros
+  dataset[ , EZE_m_prestamos    := rowSums( cbind(mprestamos_personales, mprestamos_prendarios, mprestamos_hipotecarios) , na.rm=TRUE ) ]
+  dataset[ , EZE_c_prestamos    := rowSums( cbind(cprestamos_personales, cprestamos_prendarios, cprestamos_hipotecarios) , na.rm=TRUE ) ]
+  dataset[ , EZE_c_seguros    := rowSums( cbind(cseguro_vida, cseguro_auto, cseguro_vivienda, cseguro_accidentes_personales) , na.rm=TRUE ) ]
+  
+  # Rentabilidad sobre promociones
+  dataset[ , SEB_mmg_r_promociones :=  mrentabilidad_annual / (mcajeros_propios_descuentos + mtarjeta_visa_descuentos + mtarjeta_master_descuentos) ]
 
   #Aqui debe usted agregar sus propias nuevas variables
 
@@ -379,9 +395,13 @@ RatioMax  <- function( dataset, cols, nhistoria )
 {
   sufijo  <- paste0( "_rmax", nhistoria )
 
-  dataset[ , paste0( cols, sufijo) := .SD/ frollapply(x=.SD, FUN="max", n=nhistoria, na.rm=TRUE, align="right"), 
-             by= numero_de_cliente, 
-             .SDcols= cols]
+  #dataset[ , paste0( cols, sufijo) := .SD/ frollapply(x=.SD, FUN="max", n=nhistoria, na.rm=TRUE, align="right"), 
+  #           by= numero_de_cliente, 
+  #           .SDcols= cols]  #CAMBIO ESTA FORMULA PORQUE DENTRO DE LOS 3 MESES CONSIDERA AL ACTUAL Y YO QUIERO VARIACIÓN DE ESTE MES, VS LOS 3 ANTERIORES)
+  
+  dataset[ , paste0( cols, sufijo) := .SD / shift(frollapply(.SD, FUN = "max", n=nhistoria, na.rm=TRUE, align="right"), 1, NA, "lag")-1, 
+           by= numero_de_cliente, 
+           .SDcols= cols]
 
   ReportarCampos( dataset )
 }
@@ -536,8 +556,8 @@ CanaritosImportancia  <- function( dataset )
 
   campos_buenos  <- setdiff( colnames(dataset), c("clase_ternaria","clase01" ) )
 
-  azar  <- runif( nrow(dataset) )
-  entrenamiento  <-  dataset[ , foto_mes>= 202001 &  foto_mes<= 202010 &  foto_mes!=202006 & ( clase01==1 | azar < 0.10 ) ]
+  azar  <- runif( nrow(dataset) ) #crea tantos valores aleatorios entre 0 y 1 como filas tenga el dataset
+  entrenamiento  <-  dataset[ , foto_mes>= 202001 &  foto_mes<= 202010 &  foto_mes!=202006 & ( clase01==1 | azar < 0.10 ) ] # me quedo con 10% de los datos aprox
 
   dtrain  <- lgb.Dataset( data=    data.matrix(  dataset[ entrenamiento==TRUE, campos_buenos, with=FALSE]),
                           label=   dataset[ entrenamiento==TRUE, clase01],

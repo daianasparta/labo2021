@@ -48,6 +48,13 @@ EnriquecerDataset <- function( dataset , arch_destino )
   #se crean los nuevos campos para MasterCard  y Visa, teniendo en cuenta los NA's
   #varias formas de combinar Visa_status y Master_status
   
+  #Cambio signo de algunas variables:
+  dataset[ ,  Master_Fvencimiento:= Master_Fvencimiento *(-1)]
+  dataset[ ,  Master_mpagospesos := Master_mpagospesos *(-1)]
+  dataset[ ,  Visa_Fvencimiento := Visa_Fvencimiento *(-1)]
+  dataset[ ,  Visa_mpagospesos := Visa_mpagospesos *(-1)]
+  
+  
   #FE sobre mismo mes-------------------------------------------------------------  
   dataset[ , mv_status01       := pmax( Master_status,  Visa_status, na.rm = TRUE) ]
   dataset[ , mv_status02       := Master_status +  Visa_status ]
@@ -123,7 +130,7 @@ EnriquecerDataset <- function( dataset , arch_destino )
   dataset[ , SEB_mmg_r_promociones :=  mrentabilidad_annual / (mcajeros_propios_descuentos + mtarjeta_visa_descuentos + mtarjeta_master_descuentos) ]
   
   #FE combinacion de meses------------------------------------------------------  
-  campos_lags <-  setdiff( colnames(dataset) , c("numero_de_cliente", "clase_ternaria") )
+  campos_lags <-  setdiff( colnames(dataset) , c("numero_de_cliente", "foto_mes", "clase_ternaria") )
   
   #ordeno primero y luego creo los LAGS de un mes para cada variable
   setorderv( dataset, c("numero_de_cliente","foto_mes") ) 
@@ -136,9 +143,12 @@ EnriquecerDataset <- function( dataset , arch_destino )
            by=numero_de_cliente, 
            .SDcols= campos_lags ]    
   
-  #Variacion respecto al maximo de los ultimos 3 meses
+  #Variacion respecto al maximo de los ultimos 3 y 6 meses
+  dataset[ , paste0( campos_lags, "_var_max_3m") := .SD / shift(frollapply(.SD, FUN = "max", n=3, na.rm=TRUE, align="right"), 1, NA, "lag")-1, 
+           by=numero_de_cliente, 
+           .SDcols= campos_lags ]
   
-  dataset[ , paste0( campos_lags, "var_max_3m") := (.SD / pmax(shift(.SD, c(1,2,3), NA, "lag"))-1)*100, 
+  dataset[   dataset[ , paste0( campos_lags, "_var_max_6m") := (.SD / shift(frollapply(.SD, 6,"max"), 1, NA, "lag")-1)*100, 
            by=numero_de_cliente, 
            .SDcols= campos_lags ]  
   
