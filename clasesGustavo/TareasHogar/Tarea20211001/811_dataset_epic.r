@@ -219,6 +219,13 @@ Corregir  <- function( dataset )
 AgregarVariables  <- function( dataset )
 {
   #INICIO de la seccion donde se deben hacer cambios con variables nuevas
+  
+  #Cambio signo de algunas variables:
+  dataset[ ,  Master_Fvencimiento:= Master_Fvencimiento *(-1)]
+  dataset[ ,  Master_mpagospesos := Master_mpagospesos *(-1)]
+  dataset[ ,  Visa_Fvencimiento := Visa_Fvencimiento *(-1)]
+  dataset[ ,  Visa_mpagospesos := Visa_mpagospesos *(-1)]
+  
   #se crean los nuevos campos para MasterCard  y Visa, teniendo en cuenta los NA's
   #varias formas de combinar Visa_status y Master_status
   dataset[ , mv_status01       := pmax( Master_status,  Visa_status, na.rm = TRUE) ]
