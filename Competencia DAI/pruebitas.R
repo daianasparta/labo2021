@@ -48,11 +48,10 @@ ipc <- fread("./datasets/IPC base enero 2021.csv")
 dataset <- dataset[ipc, on = .(foto_mes = anio_mes)]
 
 dataset[, paste0(campos_en_pesos, "_real_ene21") := lapply(.SD, function(.name) dataset[, ..campos_en_pesos] * 2),
-        by=numero_de_cliente, 
-        .SDcols= campos_en_pesos ]
+         .SDcols= campos_en_pesos ]
 
 dataset[, for (var in campos_en_pesos) 
-                paste0(campos_en_pesos, "_real_ene21"):= var / `ipc_base_enero 21` * 100]
+                paste0(var, "_real_ene21") := (var / `ipc_base_enero 21` * 100)]
 
 
 campos_lags <-  setdiff( colnames(dataset) , c("numero_de_cliente", "foto_mes", "clase_ternaria") )

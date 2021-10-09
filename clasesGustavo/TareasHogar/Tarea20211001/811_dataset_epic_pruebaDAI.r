@@ -19,23 +19,24 @@ require("lightgbm")
 #defino la carpeta donde trabajo
 directory.root  <-  "~/buckets/b1/"  #Google Cloud
 setwd( directory.root )
+#setwd( "C:/Users/Jonathan/Desktop/MCD - Laboratorio/7.Labo_1" )
 
 palancas  <- list()  #variable con las palancas para activar/desactivar
 
-palancas$version  <- "v002"   #Muy importante, ir cambiando la version
+palancas$version  <- "v003"   #Muy importante, ir cambiando la version
 
 palancas$variablesdrift  <- c("mpasivos_margen", "mactivos_margen")   #aqui van las columnas que se quieren eliminar
 
 palancas$corregir <-  TRUE    # TRUE o FALSE
 
-palancas$nuevasvars <-  TRUE  #si quiero hacer Feature Engineering manual
+palancas$nuevasvars <-  FALSE  #si quiero hacer Feature Engineering manual
 
 palancas$dummiesNA  <-  FALSE #La idea de Santiago Dellachiesa
 
-palancas$lag1   <- TRUE    #lag de orden 1
-palancas$delta1 <- TRUE    # campo -  lag de orden 1 
-palancas$lag2   <- TRUE
-palancas$delta2 <- TRUE
+palancas$lag1   <- FALSE    #lag de orden 1
+palancas$delta1 <- FALSE    # campo -  lag de orden 1 
+palancas$lag2   <- FALSE
+palancas$delta2 <- FALSE
 palancas$lag3   <- FALSE
 palancas$delta3 <- FALSE
 palancas$lag4   <- FALSE
@@ -57,7 +58,7 @@ palancas$maximo6  <- FALSE
 palancas$ratiomax3   <- TRUE   #La idea de Daiana Sparta
 palancas$ratiomean6  <- FALSE   #Un derivado de la idea de Daiana Sparta
 
-palancas$tendencia6  <- TRUE    #Great power comes with great responsability
+palancas$tendencia6  <- FALSE    #Great power comes with great responsability
 
 
 palancas$canaritosimportancia  <- TRUE  #si me quedo solo con lo mas importante de canaritosimportancia
@@ -564,7 +565,7 @@ CanaritosImportancia  <- function( dataset )
   campos_buenos  <- setdiff( colnames(dataset), c("clase_ternaria","clase01" ) )
 
   azar  <- runif( nrow(dataset) ) #crea tantos valores aleatorios entre 0 y 1 como filas tenga el dataset
-  entrenamiento  <-  dataset[ , foto_mes>= 202001 &  foto_mes<= 202010 &  foto_mes!=202006 & ( clase01==1 | azar < 0.10 ) ] # me quedo con 10% de los datos aprox
+  entrenamiento  <-  dataset[ , foto_mes>= 202001 &  foto_mes<= 202010 &  foto_mes!=202006 & ( clase01==1 | azar < 0.10 ) ] # me quedo con 10% de los CONTINUA. Porque me quedo con los 1 (BAJA+1 o BAJA+2) O las filas donde "azar" sea menor a 0.1
 
   dtrain  <- lgb.Dataset( data=    data.matrix(  dataset[ entrenamiento==TRUE, campos_buenos, with=FALSE]),
                           label=   dataset[ entrenamiento==TRUE, clase01],
@@ -624,7 +625,7 @@ CanaritosImportancia  <- function( dataset )
 correr_todo  <- function( palancas )
 {
   #cargo el dataset ORIGINAL
-  dataset  <- fread( "./datasetsOri/paquete_premium.csv.gz")
+  dataset <- fread("./datasets/datasets_dataset_pruebas_34meses.csv")
 
   setorder(  dataset, numero_de_cliente, foto_mes )  #ordeno el dataset
 
@@ -673,7 +674,7 @@ correr_todo  <- function( palancas )
 
   #Grabo el dataset
   fwrite( dataset,
-          paste0( "./datasets/dataset_epic_", palancas$version, ".csv.gz" ),
+          paste0( "./datasets/dataset_epic_pruebaDAI_", palancas$version, ".csv" ),
           logical01 = TRUE,
           sep= "," )
 
