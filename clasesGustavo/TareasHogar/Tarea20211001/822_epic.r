@@ -77,7 +77,7 @@ hs <- makeParamSet(
          makeIntegerParam("num_leaves",       lower=  16L   , upper= 1024L)
         )
 
-campos_malos  <- c("mpasivos_margen", "mactivos_margen")   #aqui se deben cargar todos los campos culpables del Data Drifting
+campos_malos  <- c()   #aqui se deben cargar todos los campos culpables del Data Drifting
 
 ksemilla_azar  <- 100001 #Aqui poner la propia semilla
 #------------------------------------------------------------------------------

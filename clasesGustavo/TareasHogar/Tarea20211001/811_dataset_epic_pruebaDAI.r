@@ -36,16 +36,16 @@ palancas$variablesdrift  <- c("mpasivos_margen", "mactivos_margen", "mcuentas_sa
                               "Visa_mconsumospesos", "Visa_fultimo_cierre", "Visa_mconsumototal",
                               "Visa_mpagominimo")   #aqui van las columnas que se quieren eliminar
 
-palancas$corregir <-  TRUE    # TRUE o FALSE
+palancas$corregir <-  FALSE    # TRUE o FALSE
 
-palancas$nuevasvars <-  TRUE  #si quiero hacer Feature Engineering manual
+palancas$nuevasvars <-  FALSE  #si quiero hacer Feature Engineering manual
 
 palancas$dummiesNA  <-  FALSE #La idea de Santiago Dellachiesa
 
-palancas$lag1   <- TRUE    #lag de orden 1
-palancas$delta1 <- TRUE    # campo -  lag de orden 1 
-palancas$lag2   <- TRUE
-palancas$delta2 <- TRUE
+palancas$lag1   <- FALSE    #lag de orden 1
+palancas$delta1 <- FALSE    # campo -  lag de orden 1 
+palancas$lag2   <- FALSE
+palancas$delta2 <- FALSE
 palancas$lag3   <- FALSE
 palancas$delta3 <- FALSE
 palancas$lag4   <- FALSE
@@ -69,7 +69,7 @@ palancas$ratiomean6  <- FALSE   #Un derivado de la idea de Daiana Sparta
 
 palancas$tendencia6  <- FALSE    #Great power comes with great responsability
 
-palancas$deflactar <- TRUE # Agregado DAI
+palancas$deflactar <- FALSE # Agregado DAI
 
 
 palancas$canaritosimportancia  <- TRUE  #si me quedo solo con lo mas importante de canaritosimportancia
@@ -268,7 +268,7 @@ AgregarVariables  <- function( dataset )
   dataset[ , mv_mlimitecompra        := rowSums( cbind( Master_mlimitecompra,  Visa_mlimitecompra) , na.rm=TRUE ) ]
   dataset[ , mv_madelantopesos       := rowSums( cbind( Master_madelantopesos,  Visa_madelantopesos) , na.rm=TRUE ) ]
   #dataset[ , mv_madelantodolares     := rowSums( cbind( Master_madelantodolares,  Visa_madelantodolares) , na.rm=TRUE ) ]
-  dataset[ , mv_fultimo_cierre       := pmax( Master_fultimo_cierre, Visa_fultimo_cierre, na.rm = TRUE) ]
+  #dataset[ , mv_fultimo_cierre       := pmax( Master_fultimo_cierre, Visa_fultimo_cierre, na.rm = TRUE) ]
   dataset[ , mv_mpagado              := rowSums( cbind( Master_mpagado,  Visa_mpagado) , na.rm=TRUE ) ]
   dataset[ , mv_mpagospesos          := rowSums( cbind( Master_mpagospesos,  Visa_mpagospesos) , na.rm=TRUE ) ]
   dataset[ , mv_mpagosdolares        := rowSums( cbind( Master_mpagosdolares,  Visa_mpagosdolares) , na.rm=TRUE ) ]
@@ -629,13 +629,19 @@ CanaritosImportancia  <- function( dataset )
   fwrite( tb_importancia, file="./work/impo.txt",  , sep="\t" )
   
   umbral  <- tb_importancia[ Feature %like% "canarito", median(pos) - sd(pos) ]
-  col_inutiles  <- tb_importancia[ pos >= umbral | Feature %like% "canarito",  Feature ]
+  #col_inutiles  <- tb_importancia[ pos >= umbral | Feature %like% "canarito",  Feature ]
+  
+  #for( col in col_inutiles )
+  #{
+  #  dataset[  ,  paste0(col) := NULL ]
+  #}
 
-  for( col in col_inutiles )
-  {
-    dataset[  ,  paste0(col) := NULL ]
-  }
-
+  col_utiles  <- tb_importancia[ pos < umbral & !Feature %like% "canarito",  Feature ]
+  
+  col_utiles <- c("numero_de_cliente", "foto_mes", "clase_ternaria", col_utiles)
+  
+  dataset <- dataset[ , ..col_utiles]
+  
   rm( dtrain, dvalid )
   gc()
 
