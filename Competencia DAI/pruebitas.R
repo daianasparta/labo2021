@@ -47,11 +47,31 @@ ipc <- fread("./datasets/IPC base enero 2021.csv")
 
 dataset <- dataset[ipc, on = .(foto_mes = anio_mes)]
 
-dataset[, paste0(campos_en_pesos, "_real_ene21") := lapply(.SD, function(.name) dataset[, ..campos_en_pesos] * 2),
-         .SDcols= campos_en_pesos ]
 
-dataset[, for (var in campos_en_pesos) 
-                paste0(var, "_real_ene21") := (var / `ipc_base_enero 21` * 100)]
+
+
+deflactar <- function(dataset, variables){
+        
+        dataset[ , paste0(variables , "_real_ene21") := (.SD/`ipc_base_enero 21`*100),
+                 by = foto_mes,
+                 .SD = variables]
+}
+
+deflactar(dataset, campos_en_pesos)    
+    
+dataset[ , .(foto_mes, Visa_mpagominimo, Visa_mpagominimo_real_ene21)]
+
+dataset[ , .(foto_mes, mcuenta_debitos_automaticos, `ipc_base_enero 21`, mcuenta_debitos_automaticos_real_ene21)]
+
+dataset[ , paste0(mrentabilidad , "_real_ene21") := (mrentabilidad/`ipc_base_enero 21`*100)]
+
+
+# con un for (mas lento que la funcion de arriba)
+for (var in campos_en_pesos) {
+        dataset[ , paste0(var , "_real_ene21") := (.SD/`ipc_base_enero 21`*100),
+                 by = foto_mes,
+                 .SD = var]
+}
 
 
 campos_lags <-  setdiff( colnames(dataset) , c("numero_de_cliente", "foto_mes", "clase_ternaria") )

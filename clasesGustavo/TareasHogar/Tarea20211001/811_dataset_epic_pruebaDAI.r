@@ -17,9 +17,9 @@ require("lightgbm")
 
 
 #defino la carpeta donde trabajo
-directory.root  <-  "~/buckets/b1/"  #Google Cloud
-setwd( directory.root )
-#setwd( "C:/Users/Jonathan/Desktop/MCD - Laboratorio/7.Labo_1" )
+#directory.root  <-  "~/buckets/b1/"  #Google Cloud
+#setwd( directory.root )
+setwd( "C:/Users/Jonathan/Desktop/MCD - Laboratorio/7.Labo_1" )
 
 palancas  <- list()  #variable con las palancas para activar/desactivar
 
@@ -29,14 +29,14 @@ palancas$variablesdrift  <- c("mpasivos_margen", "mactivos_margen")   #aqui van 
 
 palancas$corregir <-  TRUE    # TRUE o FALSE
 
-palancas$nuevasvars <-  FALSE  #si quiero hacer Feature Engineering manual
+palancas$nuevasvars <-  TRUE  #si quiero hacer Feature Engineering manual
 
 palancas$dummiesNA  <-  FALSE #La idea de Santiago Dellachiesa
 
-palancas$lag1   <- FALSE    #lag de orden 1
-palancas$delta1 <- FALSE    # campo -  lag de orden 1 
-palancas$lag2   <- FALSE
-palancas$delta2 <- FALSE
+palancas$lag1   <- TRUE    #lag de orden 1
+palancas$delta1 <- TRUE    # campo -  lag de orden 1 
+palancas$lag2   <- TRUE
+palancas$delta2 <- TRUE
 palancas$lag3   <- FALSE
 palancas$delta3 <- FALSE
 palancas$lag4   <- FALSE
@@ -60,12 +60,14 @@ palancas$ratiomean6  <- FALSE   #Un derivado de la idea de Daiana Sparta
 
 palancas$tendencia6  <- FALSE    #Great power comes with great responsability
 
+palancas$deflactar <- TRUE # Agregado DAI
+
 
 palancas$canaritosimportancia  <- TRUE  #si me quedo solo con lo mas importante de canaritosimportancia
 
 
 #escribo para saber cuales fueron los parametros
-write_yaml(  palancas,  paste0( "./work/palanca_",  palancas$version  ,".yaml" ) )
+#write_yaml(  palancas,  paste0( "./work/palanca_",  palancas$version  ,".yaml" ) )
 
 #------------------------------------------------------------------------------
 
@@ -527,6 +529,16 @@ Tendencia  <- function( dataset, cols )
 
 }
 #------------------------------------------------------------------------------
+# deflacta los valores en pesos nominales a valores de enero 2021
+
+deflactar <- function(dataset, variables){
+  
+  dataset[ , paste0(variables , "_real_ene21") := (.SD/`ipc_base_enero 21`*100),
+           by = foto_mes,
+           .SD = variables]
+}
+
+#------------------------------------------------------------------------------
 VPOS_CORTE  <- c()
 
 fganancia_lgbm_meseta  <- function(probs, datos) 
@@ -663,6 +675,36 @@ correr_todo  <- function( palancas )
 
   if( palancas$tendencia6 )  Tendencia( dataset, cols_analiticas)
 
+  campos_en_pesos <- c("mrentabilidad", "mrentabilidad_annual", "mcomisiones", 
+                       "mactivos_margen", "mpasivos_margen", "mcuenta_corriente_adicional", 
+                       "mcuenta_corriente", "mcaja_ahorro", "mcaja_ahorro_adicional", 
+                       "mcaja_ahorro_dolares", "mdescubierto_preacordado", "mcuentas_saldo", 
+                       "mautoservicio", "mtarjeta_visa_consumo", "mtarjeta_master_consumo", 
+                       "mprestamos_personales", "mprestamos_prendarios", "mprestamos_hipotecarios",
+                       "mplazo_fijo_dolares", "mplazo_fijo_pesos", "minversion1_pesos", 
+                       "minversion1_dolares", "minversion2", "mpayroll", "mpayroll2", 
+                       "mcuenta_debitos_automaticos", "mttarjeta_visa_debitos_automaticos", 
+                       "mttarjeta_master_debitos_automaticos", "mpagodeservicios", 
+                       "mpagomiscuentas", "mcajeros_propios_descuentos", "mtarjeta_visa_descuentos",
+                       "mtarjeta_master_descuentos", "mcomisiones_mantenimiento", "mcomisiones_otras", 
+                       "mforex_buy", "mforex_sell", "mtransferencias_recibidas", "mtransferencias_emitidas",
+                       "mextraccion_autoservicio", "mcheques_depositados", "mcheques_emitidos",
+                       "mcheques_depositados_rechazados", "mcheques_emitidos_rechazados", "matm",
+                       "matm_other", "Master_mfinanciacion_limite", "Master_msaldototal", "Master_msaldopesos",
+                       "Master_msaldodolares", "Master_mconsumospesos", "Master_mconsumosdolares",
+                       "Master_mlimitecompra", "Master_madelantopesos", "Master_madelantodolares", 
+                       "Master_mpagado", "Master_mpagospesos", "Master_mpagosdolares", "Master_mconsumototal",
+                       "Master_mpagominimo", "Visa_mfinanciacion_limite", "Visa_msaldototal", "Visa_msaldopesos",
+                       "Visa_msaldodolares", "Visa_mconsumospesos", "Visa_mconsumosdolares", "Visa_mlimitecompra", 
+                       "Visa_madelantopesos", "Visa_madelantodolares", "Visa_mpagado", "Visa_mpagospesos",
+                       "Visa_mpagosdolares", "Visa_mconsumototal", "Visa_mpagominimo")
+  campos_en_pesos <- setdiff(campos_en_pesos, palancas$variablesdrift)
+  
+  if( palancas$deflactar )  {ipc <- fread("./datasets/IPC base enero 2021.csv")
+                             dataset <- dataset[ipc, on = .(foto_mes = anio_mes)]
+                             deflactar( dataset, campos_en_pesos)
+                             dataset[ , `ipc_base_enero 21` := NULL]
+                             }
 
   if( palancas$canaritosimportancia )  CanaritosImportancia( dataset )
 
@@ -687,6 +729,6 @@ correr_todo  <- function( palancas )
 correr_todo( palancas )
 
 
-quit( save="no" )
+#quit( save="no" )
 
 

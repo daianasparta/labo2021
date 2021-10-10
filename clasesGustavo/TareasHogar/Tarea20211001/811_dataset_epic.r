@@ -22,7 +22,7 @@ setwd( directory.root )
 
 palancas  <- list()  #variable con las palancas para activar/desactivar
 
-palancas$version  <- "v002"   #Muy importante, ir cambiando la version
+palancas$version  <- "v004"   #Muy importante, ir cambiando la version
 
 palancas$variablesdrift  <- c("mpasivos_margen", "mactivos_margen")   #aqui van las columnas que se quieren eliminar
 
@@ -57,8 +57,9 @@ palancas$maximo6  <- FALSE
 palancas$ratiomax3   <- TRUE   #La idea de Daiana Sparta
 palancas$ratiomean6  <- FALSE   #Un derivado de la idea de Daiana Sparta
 
-palancas$tendencia6  <- TRUE    #Great power comes with great responsability
+palancas$tendencia6  <- FALSE    #Great power comes with great responsability
 
+palancas$deflactar <- TRUE # Agregado DAI
 
 palancas$canaritosimportancia  <- TRUE  #si me quedo solo con lo mas importante de canaritosimportancia
 
@@ -122,10 +123,11 @@ Corregir  <- function( dataset )
   dataset[ foto_mes==201801,  ccajas_depositos   := NA ]
   dataset[ foto_mes==201801,  ccajas_extracciones   := NA ]
   dataset[ foto_mes==201801,  ccajas_otras   := NA ]
-
+  
   dataset[ foto_mes==201806,  tcallcenter   :=  NA ]
   dataset[ foto_mes==201806,  ccallcenter_transacciones   :=  NA ]
-
+  dataset[ foto_mes==201806,  Master_mpagominimo   :=  NA ] # agregado DAI a partir de mirar el pdf zeroes_ratio
+  
   dataset[ foto_mes==201904,  ctarjeta_visa_debitos_automaticos  :=  NA ]
   dataset[ foto_mes==201904,  mttarjeta_visa_debitos_automaticos := NA ]
   dataset[ foto_mes==201904,  Visa_mfinanciacion_limite := NA ]
@@ -136,6 +138,7 @@ Corregir  <- function( dataset )
   dataset[ foto_mes==201905,  mpasivos_margen  := NA ]
   dataset[ foto_mes==201905,  mactivos_margen  := NA ]
   dataset[ foto_mes==201905,  ctarjeta_visa_debitos_automaticos  := NA ]
+  dataset[ foto_mes==201905,  mttarjeta_visa_debitos_automaticos  := NA ] # agregado DAI a partir de mirar el pdf zeroes_ratio
   dataset[ foto_mes==201905,  ccomisiones_otras := NA ]
   dataset[ foto_mes==201905,  mcomisiones_otras := NA ]
 
@@ -210,6 +213,18 @@ Corregir  <- function( dataset )
   dataset[ foto_mes==202011,  tmobile_app  := NA ]
   dataset[ foto_mes==202012,  tmobile_app  := NA ]
   dataset[ foto_mes==202101,  tmobile_app  := NA ]
+  
+  dataset[ foto_mes==201801,  Master_fultimo_cierre   := NA ] # agregado DAI a partir de mirar el pdf zeroes_ratio
+  dataset[ foto_mes==201802,  Master_fultimo_cierre   := NA ] 
+  dataset[ foto_mes==201810,  Master_fultimo_cierre   := NA ] 
+  dataset[ foto_mes==201907,  Master_fultimo_cierre   := NA ] 
+  dataset[ foto_mes==202009,  Master_fultimo_cierre   := NA ] 
+  
+  dataset[ foto_mes==201801,  Visa_fultimo_cierre   := NA ] # agregado DAI a partir de mirar el pdf zeroes_ratio
+  dataset[ foto_mes==201802,  Visa_fultimo_cierre   := NA ] 
+  dataset[ foto_mes==201810,  Visa_fultimo_cierre   := NA ] 
+  dataset[ foto_mes==201907,  Visa_fultimo_cierre   := NA ] 
+  dataset[ foto_mes==202009,  Visa_fultimo_cierre   := NA ] 
 
   ReportarCampos( dataset )
 }
@@ -526,6 +541,16 @@ Tendencia  <- function( dataset, cols )
 
 }
 #------------------------------------------------------------------------------
+# deflacta los valores en pesos nominales a valores de enero 2021
+
+deflactar <- function(dataset, variables){
+  
+  dataset[ , paste0(variables) := (.SD/`ipc_base_enero 21`*100),
+           by = foto_mes,
+           .SD = variables]
+}
+
+#------------------------------------------------------------------------------
 VPOS_CORTE  <- c()
 
 fganancia_lgbm_meseta  <- function(probs, datos) 
@@ -632,6 +657,38 @@ correr_todo  <- function( palancas )
 
   if( length(palancas$variablesdrift) > 0 )   DriftEliminar( dataset, palancas$variablesdrift )
 
+  campos_en_pesos <- c("mrentabilidad", "mrentabilidad_annual", "mcomisiones", 
+                       "mactivos_margen", "mpasivos_margen", "mcuenta_corriente_adicional", 
+                       "mcuenta_corriente", "mcaja_ahorro", "mcaja_ahorro_adicional", 
+                       "mcaja_ahorro_dolares", "mdescubierto_preacordado", "mcuentas_saldo", 
+                       "mautoservicio", "mtarjeta_visa_consumo", "mtarjeta_master_consumo", 
+                       "mprestamos_personales", "mprestamos_prendarios", "mprestamos_hipotecarios",
+                       "mplazo_fijo_dolares", "mplazo_fijo_pesos", "minversion1_pesos", 
+                       "minversion1_dolares", "minversion2", "mpayroll", "mpayroll2", 
+                       "mcuenta_debitos_automaticos", "mttarjeta_visa_debitos_automaticos", 
+                       "mttarjeta_master_debitos_automaticos", "mpagodeservicios", 
+                       "mpagomiscuentas", "mcajeros_propios_descuentos", "mtarjeta_visa_descuentos",
+                       "mtarjeta_master_descuentos", "mcomisiones_mantenimiento", "mcomisiones_otras", 
+                       "mforex_buy", "mforex_sell", "mtransferencias_recibidas", "mtransferencias_emitidas",
+                       "mextraccion_autoservicio", "mcheques_depositados", "mcheques_emitidos",
+                       "mcheques_depositados_rechazados", "mcheques_emitidos_rechazados", "matm",
+                       "matm_other", "Master_mfinanciacion_limite", "Master_msaldototal", "Master_msaldopesos",
+                       "Master_msaldodolares", "Master_mconsumospesos", "Master_mconsumosdolares",
+                       "Master_mlimitecompra", "Master_madelantopesos", "Master_madelantodolares", 
+                       "Master_mpagado", "Master_mpagospesos", "Master_mpagosdolares", "Master_mconsumototal",
+                       "Master_mpagominimo", "Visa_mfinanciacion_limite", "Visa_msaldototal", "Visa_msaldopesos",
+                       "Visa_msaldodolares", "Visa_mconsumospesos", "Visa_mconsumosdolares", "Visa_mlimitecompra", 
+                       "Visa_madelantopesos", "Visa_madelantodolares", "Visa_mpagado", "Visa_mpagospesos",
+                       "Visa_mpagosdolares", "Visa_mconsumototal", "Visa_mpagominimo")
+  
+  campos_en_pesos <- setdiff(campos_en_pesos, palancas$variablesdrift)
+  
+  if( palancas$deflactar )  {ipc <- fread("./datasets/IPC base enero 2021.csv")
+                             dataset <- dataset[ipc, on = .(foto_mes = anio_mes)]
+                             deflactar( dataset, campos_en_pesos)
+                             dataset[ , `ipc_base_enero 21` := NULL]
+                            }
+  
   if( palancas$dummiesNA )  DummiesNA( dataset )  #esta linea debe ir ANTES de Corregir  !!
 
   if( palancas$corregir )  Corregir( dataset )  #esta linea debe ir DESPUES de  DummiesNA
@@ -659,12 +716,9 @@ correr_todo  <- function( palancas )
   if(palancas$ratiomax3)  RatioMax(  dataset, cols_analiticas, 3) #La idea de Daiana Sparta
   if(palancas$ratiomean6) RatioMean( dataset, cols_analiticas, 6) #Derivado de la idea de Daiana Sparta
 
-
   if( palancas$tendencia6 )  Tendencia( dataset, cols_analiticas)
 
-
   if( palancas$canaritosimportancia )  CanaritosImportancia( dataset )
-
 
 
   #dejo la clase como ultimo campo
