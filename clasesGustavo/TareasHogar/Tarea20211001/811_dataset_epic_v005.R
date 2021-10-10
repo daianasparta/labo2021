@@ -17,13 +17,12 @@ require("lightgbm")
 
 
 #defino la carpeta donde trabajo
-#directory.root  <-  "~/buckets/b1/"  #Google Cloud
-#setwd( directory.root )
-setwd( "C:/Users/Jonathan/Desktop/MCD - Laboratorio/7.Labo_1" )
+directory.root  <-  "~/buckets/b1/"  #Google Cloud
+setwd( directory.root )
 
 palancas  <- list()  #variable con las palancas para activar/desactivar
 
-palancas$version  <- "v003"   #Muy importante, ir cambiando la version
+palancas$version  <- "v005"   #Muy importante, ir cambiando la version
 
 palancas$variablesdrift  <- c("mpasivos_margen", "mactivos_margen", "mcuentas_saldo",
                               "mcajeros_propios_descuentos", "mtarjeta_visa_descuentos",
@@ -71,12 +70,11 @@ palancas$tendencia6  <- FALSE    #Great power comes with great responsability
 
 palancas$deflactar <- TRUE # Agregado DAI
 
-
 palancas$canaritosimportancia  <- TRUE  #si me quedo solo con lo mas importante de canaritosimportancia
 
 
 #escribo para saber cuales fueron los parametros
-#write_yaml(  palancas,  paste0( "./work/palanca_",  palancas$version  ,".yaml" ) )
+write_yaml(  palancas,  paste0( "./work/palanca_",  palancas$version  ,".yaml" ) )
 
 #------------------------------------------------------------------------------
 
@@ -134,10 +132,11 @@ Corregir  <- function( dataset )
   dataset[ foto_mes==201801,  ccajas_depositos   := NA ]
   dataset[ foto_mes==201801,  ccajas_extracciones   := NA ]
   dataset[ foto_mes==201801,  ccajas_otras   := NA ]
-
+  
   dataset[ foto_mes==201806,  tcallcenter   :=  NA ]
   dataset[ foto_mes==201806,  ccallcenter_transacciones   :=  NA ]
-
+  #dataset[ foto_mes==201806,  Master_mpagominimo   :=  NA ] # agregado DAI a partir de mirar el pdf zeroes_ratio
+  
   dataset[ foto_mes==201904,  ctarjeta_visa_debitos_automaticos  :=  NA ]
   dataset[ foto_mes==201904,  mttarjeta_visa_debitos_automaticos := NA ]
   #dataset[ foto_mes==201904,  Visa_mfinanciacion_limite := NA ]
@@ -148,6 +147,7 @@ Corregir  <- function( dataset )
   dataset[ foto_mes==201905,  mpasivos_margen  := NA ]
   dataset[ foto_mes==201905,  mactivos_margen  := NA ]
   dataset[ foto_mes==201905,  ctarjeta_visa_debitos_automaticos  := NA ]
+  dataset[ foto_mes==201905,  mttarjeta_visa_debitos_automaticos  := NA ] # agregado DAI a partir de mirar el pdf zeroes_ratio
   dataset[ foto_mes==201905,  ccomisiones_otras := NA ]
   dataset[ foto_mes==201905,  mcomisiones_otras := NA ]
 
@@ -161,10 +161,10 @@ Corregir  <- function( dataset )
   dataset[ foto_mes==201910,  chomebanking_transacciones  := NA ]
   dataset[ foto_mes==201910,  ctarjeta_visa_descuentos    := NA ]
   dataset[ foto_mes==201910,  ctarjeta_master_descuentos  := NA ]
-  dataset[ foto_mes==201910,  mtarjeta_visa_descuentos    := NA ]
+  #dataset[ foto_mes==201910,  mtarjeta_visa_descuentos    := NA ]
   dataset[ foto_mes==201910,  mtarjeta_master_descuentos  := NA ]
   dataset[ foto_mes==201910,  ccajeros_propios_descuentos := NA ]
-  dataset[ foto_mes==201910,  mcajeros_propios_descuentos := NA ]
+  #dataset[ foto_mes==201910,  mcajeros_propios_descuentos := NA ]
 
   dataset[ foto_mes==202001,  cliente_vip   := NA ]
 
@@ -175,7 +175,7 @@ Corregir  <- function( dataset )
   dataset[ foto_mes==202006,  mcomisiones   := NA ]
   dataset[ foto_mes==202006,  mactivos_margen   := NA ]
   dataset[ foto_mes==202006,  mpasivos_margen   := NA ]
-  dataset[ foto_mes==202006,  mcuentas_saldo   := NA ]
+  #dataset[ foto_mes==202006,  mcuentas_saldo   := NA ]
   dataset[ foto_mes==202006,  ctarjeta_debito_transacciones   := NA ]
   dataset[ foto_mes==202006,  mautoservicio   := NA ]
   dataset[ foto_mes==202006,  ctarjeta_visa_transacciones   := NA ]
@@ -222,6 +222,18 @@ Corregir  <- function( dataset )
   dataset[ foto_mes==202011,  tmobile_app  := NA ]
   dataset[ foto_mes==202012,  tmobile_app  := NA ]
   dataset[ foto_mes==202101,  tmobile_app  := NA ]
+  
+  #dataset[ foto_mes==201801,  Master_fultimo_cierre   := NA ] # agregado DAI a partir de mirar el pdf zeroes_ratio
+  #dataset[ foto_mes==201802,  Master_fultimo_cierre   := NA ] 
+  #dataset[ foto_mes==201810,  Master_fultimo_cierre   := NA ] 
+  #dataset[ foto_mes==201907,  Master_fultimo_cierre   := NA ] 
+  #dataset[ foto_mes==202009,  Master_fultimo_cierre   := NA ] 
+  
+  #dataset[ foto_mes==201801,  Visa_fultimo_cierre   := NA ] # agregado DAI a partir de mirar el pdf zeroes_ratio
+  #dataset[ foto_mes==201802,  Visa_fultimo_cierre   := NA ] 
+  #dataset[ foto_mes==201810,  Visa_fultimo_cierre   := NA ] 
+  #dataset[ foto_mes==201907,  Visa_fultimo_cierre   := NA ] 
+  #dataset[ foto_mes==202009,  Visa_fultimo_cierre   := NA ] 
 
   ReportarCampos( dataset )
 }
@@ -268,15 +280,15 @@ AgregarVariables  <- function( dataset )
   dataset[ , mv_mlimitecompra        := rowSums( cbind( Master_mlimitecompra,  Visa_mlimitecompra) , na.rm=TRUE ) ]
   dataset[ , mv_madelantopesos       := rowSums( cbind( Master_madelantopesos,  Visa_madelantopesos) , na.rm=TRUE ) ]
   #dataset[ , mv_madelantodolares     := rowSums( cbind( Master_madelantodolares,  Visa_madelantodolares) , na.rm=TRUE ) ]
-  dataset[ , mv_fultimo_cierre       := pmax( Master_fultimo_cierre, Visa_fultimo_cierre, na.rm = TRUE) ]
-  dataset[ , mv_mpagado              := rowSums( cbind( Master_mpagado,  Visa_mpagado) , na.rm=TRUE ) ]
+  #dataset[ , mv_fultimo_cierre       := pmax( Master_fultimo_cierre, Visa_fultimo_cierre, na.rm = TRUE) ]
+  #dataset[ , mv_mpagado              := rowSums( cbind( Master_mpagado,  Visa_mpagado) , na.rm=TRUE ) ]
   dataset[ , mv_mpagospesos          := rowSums( cbind( Master_mpagospesos,  Visa_mpagospesos) , na.rm=TRUE ) ]
   dataset[ , mv_mpagosdolares        := rowSums( cbind( Master_mpagosdolares,  Visa_mpagosdolares) , na.rm=TRUE ) ]
   dataset[ , mv_fechaalta            := pmax( Master_fechaalta, Visa_fechaalta, na.rm = TRUE) ]
-  dataset[ , mv_mconsumototal        := rowSums( cbind( Master_mconsumototal,  Visa_mconsumototal) , na.rm=TRUE ) ]
+  #dataset[ , mv_mconsumototal        := rowSums( cbind( Master_mconsumototal,  Visa_mconsumototal) , na.rm=TRUE ) ]
   dataset[ , mv_cconsumos            := rowSums( cbind( Master_cconsumos,  Visa_cconsumos) , na.rm=TRUE ) ]
   dataset[ , mv_cadelantosefectivo   := rowSums( cbind( Master_cadelantosefectivo,  Visa_cadelantosefectivo) , na.rm=TRUE ) ]
-  dataset[ , mv_mpagominimo          := rowSums( cbind( Master_mpagominimo,  Visa_mpagominimo) , na.rm=TRUE ) ]
+  #dataset[ , mv_mpagominimo          := rowSums( cbind( Master_mpagominimo,  Visa_mpagominimo) , na.rm=TRUE ) ]
 
   #a partir de aqui juego con la suma de Mastercard y Visa
   dataset[ , mvr_Master_mlimitecompra:= Master_mlimitecompra / mv_mlimitecompra ]
@@ -290,15 +302,15 @@ AgregarVariables  <- function( dataset )
   dataset[ , mvr_mconsumosdolares    := mv_mconsumosdolares / mv_mlimitecompra ]
   dataset[ , mvr_madelantopesos      := mv_madelantopesos / mv_mlimitecompra ]
   #dataset[ , mvr_madelantodolares    := mv_madelantodolares / mv_mlimitecompra ]
-  dataset[ , mvr_mpagado             := mv_mpagado / mv_mlimitecompra ]
+  #dataset[ , mvr_mpagado             := mv_mpagado / mv_mlimitecompra ]
   dataset[ , mvr_mpagospesos         := mv_mpagospesos / mv_mlimitecompra ]
   dataset[ , mvr_mpagosdolares       := mv_mpagosdolares / mv_mlimitecompra ]
-  dataset[ , mvr_mconsumototal       := mv_mconsumototal  / mv_mlimitecompra ]
-  dataset[ , mvr_mpagominimo         := mv_mpagominimo  / mv_mlimitecompra ]
+  #dataset[ , mvr_mconsumototal       := mv_mconsumototal  / mv_mlimitecompra ]
+  #dataset[ , mvr_mpagominimo         := mv_mpagominimo  / mv_mlimitecompra ]
   
   dataset[ , m_cacc    := rowSums( cbind( mcaja_ahorro,  mcuenta_corriente) , na.rm=TRUE ) ]
-  dataset[ , mvr_cacc   := mv_mconsumototal  / m_cacc ]
-  dataset[ , mvr_limite   := mv_mconsumototal  / (Master_mlimitecompra + Visa_mlimitecompra) ]
+  #dataset[ , mvr_cacc   := mv_mconsumototal  / m_cacc ]
+  #dataset[ , mvr_limite   := mv_mconsumototal  / (Master_mlimitecompra + Visa_mlimitecompra) ]
   
   # Debitos automaticos
   dataset[ , c_debitos    := rowSums( cbind( ccuenta_debitos_automaticos,ctarjeta_master_debitos_automaticos,  ctarjeta_visa_debitos_automaticos) , na.rm=TRUE ) ]
@@ -310,8 +322,8 @@ AgregarVariables  <- function( dataset )
   dataset[ , EZE_c_seguros    := rowSums( cbind(cseguro_vida, cseguro_auto, cseguro_vivienda, cseguro_accidentes_personales) , na.rm=TRUE ) ]
   
   # Rentabilidad sobre promociones
-  dataset[ , SEB_mmg_r_promociones :=  mrentabilidad_annual / (mcajeros_propios_descuentos + mtarjeta_visa_descuentos + mtarjeta_master_descuentos) ]
-
+  #dataset[ , SEB_mmg_r_promociones :=  mrentabilidad_annual / (mcajeros_propios_descuentos + mtarjeta_visa_descuentos + mtarjeta_master_descuentos) ]
+  
   #Aqui debe usted agregar sus propias nuevas variables
 
   #valvula de seguridad para evitar valores infinitos
@@ -542,7 +554,7 @@ Tendencia  <- function( dataset, cols )
 
 deflactar <- function(dataset, variables){
   
-  dataset[ , paste0(variables , "_real_ene21") := (.SD/`ipc_base_enero 21`*100),
+  dataset[ , paste0(variables) := (.SD/`ipc_base_enero 21`*100),
            by = foto_mes,
            .SD = variables]
 }
@@ -586,7 +598,7 @@ CanaritosImportancia  <- function( dataset )
   campos_buenos  <- setdiff( colnames(dataset), c("clase_ternaria","clase01" ) )
 
   azar  <- runif( nrow(dataset) ) #crea tantos valores aleatorios entre 0 y 1 como filas tenga el dataset
-  entrenamiento  <-  dataset[ , foto_mes>= 202001 &  foto_mes<= 202010 &  foto_mes!=202006 & ( clase01==1 | azar < 0.10 ) ] # me quedo con 10% de los CONTINUA. Porque me quedo con los 1 (BAJA+1 o BAJA+2) O las filas donde "azar" sea menor a 0.1
+  entrenamiento  <-  dataset[ , foto_mes>= 202001 &  foto_mes<= 202010 &  foto_mes!=202006 & ( clase01==1 | azar < 0.10 ) ] # me quedo con 10% de los datos aprox
 
   dtrain  <- lgb.Dataset( data=    data.matrix(  dataset[ entrenamiento==TRUE, campos_buenos, with=FALSE]),
                           label=   dataset[ entrenamiento==TRUE, clase01],
@@ -626,7 +638,7 @@ CanaritosImportancia  <- function( dataset )
   tb_importancia  <- lgb.importance( model= modelo )
   tb_importancia[  , pos := .I ]
   
-  fwrite( tb_importancia, file="./work/impo.txt",  , sep="\t" )
+  fwrite( tb_importancia, file="./work/impo_v005.txt",  , sep="\t" )
   
   umbral  <- tb_importancia[ Feature %like% "canarito", median(pos) - sd(pos) ]
   col_inutiles  <- tb_importancia[ pos >= umbral | Feature %like% "canarito",  Feature ]
@@ -646,7 +658,7 @@ CanaritosImportancia  <- function( dataset )
 correr_todo  <- function( palancas )
 {
   #cargo el dataset ORIGINAL
-  dataset <- fread("./datasets/datasets_dataset_pruebas_34meses.csv")
+  dataset  <- fread( "./datasetsOri/paquete_premium.csv.gz")
 
   setorder(  dataset, numero_de_cliente, foto_mes )  #ordeno el dataset
 
@@ -654,6 +666,38 @@ correr_todo  <- function( palancas )
 
   if( length(palancas$variablesdrift) > 0 )   DriftEliminar( dataset, palancas$variablesdrift )
 
+  campos_en_pesos <- c("mrentabilidad", "mrentabilidad_annual", "mcomisiones", 
+                       "mactivos_margen", "mpasivos_margen", "mcuenta_corriente_adicional", 
+                       "mcuenta_corriente", "mcaja_ahorro", "mcaja_ahorro_adicional", 
+                       "mcaja_ahorro_dolares", "mdescubierto_preacordado", "mcuentas_saldo", 
+                       "mautoservicio", "mtarjeta_visa_consumo", "mtarjeta_master_consumo", 
+                       "mprestamos_personales", "mprestamos_prendarios", "mprestamos_hipotecarios",
+                       "mplazo_fijo_dolares", "mplazo_fijo_pesos", "minversion1_pesos", 
+                       "minversion1_dolares", "minversion2", "mpayroll", "mpayroll2", 
+                       "mcuenta_debitos_automaticos", "mttarjeta_visa_debitos_automaticos", 
+                       "mttarjeta_master_debitos_automaticos", "mpagodeservicios", 
+                       "mpagomiscuentas", "mcajeros_propios_descuentos", "mtarjeta_visa_descuentos",
+                       "mtarjeta_master_descuentos", "mcomisiones_mantenimiento", "mcomisiones_otras", 
+                       "mforex_buy", "mforex_sell", "mtransferencias_recibidas", "mtransferencias_emitidas",
+                       "mextraccion_autoservicio", "mcheques_depositados", "mcheques_emitidos",
+                       "mcheques_depositados_rechazados", "mcheques_emitidos_rechazados", "matm",
+                       "matm_other", "Master_mfinanciacion_limite", "Master_msaldototal", "Master_msaldopesos",
+                       "Master_msaldodolares", "Master_mconsumospesos", "Master_mconsumosdolares",
+                       "Master_mlimitecompra", "Master_madelantopesos", "Master_madelantodolares", 
+                       "Master_mpagado", "Master_mpagospesos", "Master_mpagosdolares", "Master_mconsumototal",
+                       "Master_mpagominimo", "Visa_mfinanciacion_limite", "Visa_msaldototal", "Visa_msaldopesos",
+                       "Visa_msaldodolares", "Visa_mconsumospesos", "Visa_mconsumosdolares", "Visa_mlimitecompra", 
+                       "Visa_madelantopesos", "Visa_madelantodolares", "Visa_mpagado", "Visa_mpagospesos",
+                       "Visa_mpagosdolares", "Visa_mconsumototal", "Visa_mpagominimo")
+  
+  campos_en_pesos <- setdiff(campos_en_pesos, palancas$variablesdrift)
+  
+  if( palancas$deflactar )  {ipc <- fread("./datasets/IPC base enero 2021.csv")
+                             dataset <- dataset[ipc, on = .(foto_mes = anio_mes)]
+                             deflactar( dataset, campos_en_pesos)
+                             dataset[ , `ipc_base_enero 21` := NULL]
+                            }
+  
   if( palancas$dummiesNA )  DummiesNA( dataset )  #esta linea debe ir ANTES de Corregir  !!
 
   if( palancas$corregir )  Corregir( dataset )  #esta linea debe ir DESPUES de  DummiesNA
@@ -681,42 +725,9 @@ correr_todo  <- function( palancas )
   if(palancas$ratiomax3)  RatioMax(  dataset, cols_analiticas, 3) #La idea de Daiana Sparta
   if(palancas$ratiomean6) RatioMean( dataset, cols_analiticas, 6) #Derivado de la idea de Daiana Sparta
 
-
   if( palancas$tendencia6 )  Tendencia( dataset, cols_analiticas)
 
-  campos_en_pesos <- c("mrentabilidad", "mrentabilidad_annual", "mcomisiones", 
-                       "mactivos_margen", "mpasivos_margen", "mcuenta_corriente_adicional", 
-                       "mcuenta_corriente", "mcaja_ahorro", "mcaja_ahorro_adicional", 
-                       "mcaja_ahorro_dolares", "mdescubierto_preacordado", "mcuentas_saldo", 
-                       "mautoservicio", "mtarjeta_visa_consumo", "mtarjeta_master_consumo", 
-                       "mprestamos_personales", "mprestamos_prendarios", "mprestamos_hipotecarios",
-                       "mplazo_fijo_dolares", "mplazo_fijo_pesos", "minversion1_pesos", 
-                       "minversion1_dolares", "minversion2", "mpayroll", "mpayroll2", 
-                       "mcuenta_debitos_automaticos", "mttarjeta_visa_debitos_automaticos", 
-                       "mttarjeta_master_debitos_automaticos", "mpagodeservicios", 
-                       "mpagomiscuentas", "mcajeros_propios_descuentos", "mtarjeta_visa_descuentos",
-                       "mtarjeta_master_descuentos", "mcomisiones_mantenimiento", "mcomisiones_otras", 
-                       "mforex_buy", "mforex_sell", "mtransferencias_recibidas", "mtransferencias_emitidas",
-                       "mextraccion_autoservicio", "mcheques_depositados", "mcheques_emitidos",
-                       "mcheques_depositados_rechazados", "mcheques_emitidos_rechazados", "matm",
-                       "matm_other", "Master_mfinanciacion_limite", "Master_msaldototal", "Master_msaldopesos",
-                       "Master_msaldodolares", "Master_mconsumospesos", "Master_mconsumosdolares",
-                       "Master_mlimitecompra", "Master_madelantopesos", "Master_madelantodolares", 
-                       "Master_mpagado", "Master_mpagospesos", "Master_mpagosdolares", "Master_mconsumototal",
-                       "Master_mpagominimo", "Visa_mfinanciacion_limite", "Visa_msaldototal", "Visa_msaldopesos",
-                       "Visa_msaldodolares", "Visa_mconsumospesos", "Visa_mconsumosdolares", "Visa_mlimitecompra", 
-                       "Visa_madelantopesos", "Visa_madelantodolares", "Visa_mpagado", "Visa_mpagospesos",
-                       "Visa_mpagosdolares", "Visa_mconsumototal", "Visa_mpagominimo")
-  campos_en_pesos <- setdiff(campos_en_pesos, palancas$variablesdrift)
-  
-  if( palancas$deflactar )  {ipc <- fread("./datasets/IPC base enero 2021.csv")
-                             dataset <- dataset[ipc, on = .(foto_mes = anio_mes)]
-                             deflactar( dataset, campos_en_pesos)
-                             dataset[ , `ipc_base_enero 21` := NULL]
-                             }
-
   if( palancas$canaritosimportancia )  CanaritosImportancia( dataset )
-
 
 
   #dejo la clase como ultimo campo
@@ -725,7 +736,7 @@ correr_todo  <- function( palancas )
 
   #Grabo el dataset
   fwrite( dataset,
-          paste0( "./datasets/dataset_epic_pruebaDAI_", palancas$version, ".csv" ),
+          paste0( "./datasets/dataset_epic_", palancas$version, ".csv.gz" ),
           logical01 = TRUE,
           sep= "," )
 
@@ -738,6 +749,6 @@ correr_todo  <- function( palancas )
 correr_todo( palancas )
 
 
-#quit( save="no" )
+quit( save="no" )
 
 
