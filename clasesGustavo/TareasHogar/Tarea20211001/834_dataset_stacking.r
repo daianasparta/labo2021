@@ -12,7 +12,7 @@ require("data.table")
 
 setwd("~/buckets/b1/" )
 
-version  <- "v002"  #cambiar cada vez, asi se tiene versionado del dataset
+version  <- "v001"  #cambiar cada vez, asi se tiene versionado del dataset
 
 dataset  <- fread( "./datasetsOri/paquete_premium.csv.gz" )
 dataset  <- copy(  dataset[  , c("numero_de_cliente","foto_mes","clase_ternaria"),  with=FALSE] )

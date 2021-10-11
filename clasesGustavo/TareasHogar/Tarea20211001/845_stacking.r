@@ -49,7 +49,7 @@ kexperimento  <- NA   #NA si se corre la primera vez, un valor concreto si es pa
 
 kscript         <- "845_stacking"
 
-karch_dataset    <- "./datasets/dataset_stacking_v002.csv.gz"   #este dataset se genero en el script 811_dataset_epic.r
+karch_dataset    <- "./datasets/dataset_stacking_v001.csv.gz"   #este dataset se genero en el script 811_dataset_epic.r
 
 kapply_mes       <- c(202101)  #El mes donde debo aplicar el modelo
 
@@ -71,15 +71,15 @@ kBO_iter    <-  150   #cantidad de iteraciones de la Optimizacion Bayesiana
 
 #Aqui se cargan los hiperparametros
 hs <- makeParamSet( 
-         makeNumericParam("learning_rate",    lower=    0.02 , upper=    0.1),
-         makeNumericParam("feature_fraction", lower=    0.1  , upper=    1.0),
-         makeIntegerParam("min_data_in_leaf", lower=  200L   , upper= 8000L),
-         makeIntegerParam("num_leaves",       lower=  100L   , upper= 1024L)
-        )
+            makeNumericParam("learning_rate",    lower=    0.01 , upper=    0.1),
+            makeNumericParam("feature_fraction", lower=    0.2  , upper=    1.0),
+            makeIntegerParam("min_data_in_leaf", lower=  0L   , upper= 8000L),
+            makeIntegerParam("num_leaves",       lower=  16L   , upper= 1024L)
+                  )
 
 campos_malos  <- c()   #aqui se deben cargar todos los campos culpables del Data Drifting
 
-ksemilla_azar  <- 102191  #Aqui poner la propia semilla
+ksemilla_azar  <- 100001  #Aqui poner la propia semilla
 #------------------------------------------------------------------------------
 #Funcion que lleva el registro de los experimentos
 
