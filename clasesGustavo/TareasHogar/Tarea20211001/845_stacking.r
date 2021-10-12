@@ -74,7 +74,7 @@ hs <- makeParamSet(
             makeNumericParam("learning_rate",    lower=    0.01 , upper=    0.1),
             makeNumericParam("feature_fraction", lower=    0.2  , upper=    1.0),
             makeIntegerParam("min_data_in_leaf", lower=  0L   , upper= 8000L),
-            makeIntegerParam("num_leaves",       lower=  16L   , upper= 1024L)
+            makeIntegerParam("num_leaves",       lower=  16L   , upper= 1200L)
                   )
 
 campos_malos  <- c()   #aqui se deben cargar todos los campos culpables del Data Drifting
