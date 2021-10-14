@@ -45,7 +45,8 @@ campos_en_pesos <- c("mrentabilidad", "mrentabilidad_annual", "mcomisiones",
 ipc <- fread("./datasets/IPC base enero 2021.csv")
 
 
-dataset <- dataset[ipc, on = .(foto_mes = anio_mes)]
+dataset2 <- ipc[dataset, on = .(anio_mes = foto_mes)]
+
 
 
 
@@ -99,8 +100,9 @@ dataset[ , paste0( campos_lags, "_var_max_3mGUSTAVO") := .SD/ frollapply(x=.SD, 
          .SDcols= campos_lags ]
 
 
+var_utiles <- c("numero_de_cliente", "clase_ternaria")
 
-
+dataset2 <- dataset2[, ..var_utiles]
 
 select(dataset, foto_mes, 
        Visa_mpagospesos, 
